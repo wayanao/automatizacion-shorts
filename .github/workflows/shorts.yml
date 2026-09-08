@@ -32,7 +32,9 @@ jobs:
           sudo sed -i '/pattern="path"/d' /etc/ImageMagick-6/policy.xml || true
 
       - name: Copiar fuente para subtitulos
-        run: cp /usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf assets/font.ttf
+        run: |
+          mkdir -p assets
+          cp /usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf assets/font.ttf
 
       - name: Instalar dependencias de Python
         run: pip install -r requirements.txt
