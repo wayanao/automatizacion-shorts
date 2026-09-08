@@ -57,6 +57,7 @@ def _build_subtitle_clips(words: list[dict]) -> list[TextClip]:
                 method="caption",
                 size=(int(config.VIDEO_WIDTH * 0.85), None),
                 text_align="center",
+                margin=(30, 30, 30, 30),
             )
             .with_start(phrase["start"])
             .with_duration(duration)
