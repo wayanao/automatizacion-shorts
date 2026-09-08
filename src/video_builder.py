@@ -1,12 +1,7 @@
 """Ensambla el short final: video de fondo + audio narrado + subtitulos animados palabra por palabra."""
 from pathlib import Path
-from moviepy.editor import (
-    VideoFileClip,
-    AudioFileClip,
-    CompositeVideoClip,
-    TextClip,
-    vfx,
-)
+from moviepy import VideoFileClip, AudioFileClip, CompositeVideoClip, TextClip
+from moviepy.video.fx import Loop
 from src import config
 
 
@@ -17,19 +12,19 @@ def _crop_to_vertical(clip: VideoFileClip) -> VideoFileClip:
     if current_ratio > target_ratio:
         new_width = int(clip.h * target_ratio)
         x1 = (clip.w - new_width) // 2
-        clip = clip.crop(x1=x1, y1=0, x2=x1 + new_width, y2=clip.h)
+        clip = clip.cropped(x1=x1, y1=0, x2=x1 + new_width, y2=clip.h)
     else:
         new_height = int(clip.w / target_ratio)
         y1 = (clip.h - new_height) // 2
-        clip = clip.crop(x1=0, y1=y1, x2=clip.w, y2=y1 + new_height)
+        clip = clip.cropped(x1=0, y1=y1, x2=clip.w, y2=y1 + new_height)
 
-    return clip.resize((config.VIDEO_WIDTH, config.VIDEO_HEIGHT))
+    return clip.resized((config.VIDEO_WIDTH, config.VIDEO_HEIGHT))
 
 
 def _loop_to_duration(clip: VideoFileClip, duration: float) -> VideoFileClip:
     if clip.duration < duration:
-        clip = clip.fx(vfx.loop, duration=duration)
-    return clip.subclip(0, duration)
+        clip = clip.with_effects([Loop(duration=duration)])
+    return clip.subclipped(0, duration)
 
 
 def _group_words_into_phrases(words: list[dict], max_words: int = 4) -> list[dict]:
@@ -53,19 +48,19 @@ def _build_subtitle_clips(words: list[dict]) -> list[TextClip]:
         duration = max(phrase["end"] - phrase["start"], 0.1)
         text_clip = (
             TextClip(
-                phrase["text"].upper(),
-                fontsize=80,
                 font=config.FONT_PATH,
+                text=phrase["text"].upper(),
+                font_size=80,
                 color="white",
                 stroke_color="black",
                 stroke_width=4,
                 method="caption",
                 size=(int(config.VIDEO_WIDTH * 0.85), None),
-                align="center",
+                text_align="center",
             )
-            .set_start(phrase["start"])
-            .set_duration(duration)
-            .set_position(("center", "center"))
+            .with_start(phrase["start"])
+            .with_duration(duration)
+            .with_position(("center", "center"))
         )
         clips.append(text_clip)
     return clips
@@ -83,8 +78,8 @@ def build_video(background_path: Path, audio_path: Path, words: list[dict], out_
     subtitle_clips = _build_subtitle_clips(words)
 
     final = CompositeVideoClip([background_clip, *subtitle_clips], size=(config.VIDEO_WIDTH, config.VIDEO_HEIGHT))
-    final = final.set_audio(audio_clip.subclip(0, duration))
-    final = final.set_duration(duration)
+    final = final.with_audio(audio_clip.subclipped(0, duration))
+    final = final.with_duration(duration)
 
     final.write_videofile(
         str(out_path),

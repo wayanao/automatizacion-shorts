@@ -21,15 +21,10 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Instalar ffmpeg e ImageMagick
+      - name: Instalar ffmpeg
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg imagemagick fonts-dejavu-core
-
-      - name: Permitir a ImageMagick generar texto (policy de seguridad)
-        run: |
-          sudo sed -i 's/rights="none" pattern="@\*"/rights="read|write" pattern="@*"/' /etc/ImageMagick-6/policy.xml || true
-          sudo sed -i '/pattern="path"/d' /etc/ImageMagick-6/policy.xml || true
+          sudo apt-get install -y ffmpeg fonts-dejavu-core
 
       - name: Copiar fuente para subtitulos
         run: |
