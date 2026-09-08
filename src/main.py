@@ -33,10 +33,14 @@ def run() -> None:
     background_path = download_background_video(data["keywords"], work_dir / "fondo.mp4")
 
     print("[5/6] Ensamblando video final...")
-    final_video_path = build_video(background_path, audio_path, words, work_dir / "short_final.mp4")
+    final_video_path, music_attribution = build_video(background_path, audio_path, words, work_dir / "short_final.mp4")
+
+    description = data["description"]
+    if music_attribution:
+        description = f"{description}\n\n{music_attribution}"
 
     print("[6/6] Subiendo a YouTube...")
-    url = upload_short(final_video_path, data["title"], data["description"], data["tags"])
+    url = upload_short(final_video_path, data["title"], description, data["tags"])
 
     save_used_topic(data["topic"])
     print(f"\n✅ Short publicado: {url}")

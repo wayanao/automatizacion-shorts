@@ -10,5 +10,6 @@ output/
 *.mp3
 *.wav
 
-# conservar el historial de temas usados
+# conservar la musica de fondo (assets/music) y el historial de temas usados
+!assets/music/*.mp3
 !used_topics.json

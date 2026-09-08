@@ -1,8 +1,16 @@
 """Ensambla el short final: video de fondo + audio narrado + subtitulos animados palabra por palabra."""
 from pathlib import Path
-from moviepy import VideoFileClip, AudioFileClip, CompositeVideoClip, TextClip
+from moviepy import (
+    VideoFileClip,
+    AudioFileClip,
+    CompositeVideoClip,
+    CompositeAudioClip,
+    TextClip,
+)
+from moviepy.audio.fx import MultiplyVolume
 from moviepy.video.fx import Loop
 from src import config
+from src.music import pick_background_music
 
 
 def _crop_to_vertical(clip: VideoFileClip) -> VideoFileClip:
@@ -22,6 +30,12 @@ def _crop_to_vertical(clip: VideoFileClip) -> VideoFileClip:
 
 
 def _loop_to_duration(clip: VideoFileClip, duration: float) -> VideoFileClip:
+    if clip.duration < duration:
+        clip = clip.with_effects([Loop(duration=duration)])
+    return clip.subclipped(0, duration)
+
+
+def _loop_audio_to_duration(clip: AudioFileClip, duration: float) -> AudioFileClip:
     if clip.duration < duration:
         clip = clip.with_effects([Loop(duration=duration)])
     return clip.subclipped(0, duration)
@@ -67,9 +81,19 @@ def _build_subtitle_clips(words: list[dict]) -> list[TextClip]:
     return clips
 
 
-def build_video(background_path: Path, audio_path: Path, words: list[dict], out_path: Path) -> Path:
+def build_video(background_path: Path, audio_path: Path, words: list[dict], out_path: Path) -> tuple[Path, str | None]:
     audio_clip = AudioFileClip(str(audio_path))
     duration = min(audio_clip.duration, config.MAX_DURATION_SECONDS)
+    voice_clip = audio_clip.subclipped(0, duration)
+
+    music_path, music_attribution = pick_background_music()
+    if music_path:
+        music_clip = AudioFileClip(music_path)
+        music_clip = _loop_audio_to_duration(music_clip, duration)
+        music_clip = music_clip.with_effects([MultiplyVolume(0.12)])  # de fondo, bajo volumen
+        final_audio = CompositeAudioClip([music_clip, voice_clip])
+    else:
+        final_audio = voice_clip
 
     background_clip = VideoFileClip(str(background_path))
     background_clip = _crop_to_vertical(background_clip)
@@ -79,7 +103,7 @@ def build_video(background_path: Path, audio_path: Path, words: list[dict], out_
     subtitle_clips = _build_subtitle_clips(words)
 
     final = CompositeVideoClip([background_clip, *subtitle_clips], size=(config.VIDEO_WIDTH, config.VIDEO_HEIGHT))
-    final = final.with_audio(audio_clip.subclipped(0, duration))
+    final = final.with_audio(final_audio)
     final = final.with_duration(duration)
 
     final.write_videofile(
@@ -95,4 +119,4 @@ def build_video(background_path: Path, audio_path: Path, words: list[dict], out_
     background_clip.close()
     final.close()
 
-    return out_path
+    return out_path, music_attribution
