@@ -36,9 +36,9 @@ def _loop_to_duration(clip: VideoFileClip, duration: float) -> VideoFileClip:
 
 
 def _loop_audio_to_duration(clip: AudioFileClip, duration: float) -> AudioFileClip:
-    if clip.duration < duration:
-        clip = clip.with_effects([Loop(duration=duration)])
-    return clip.subclipped(0, duration)
+    if clip.duration <= 0:
+        return clip
+    return clip.subclipped(0, min(clip.duration, duration))
 
 
 def _group_words_into_phrases(words: list[dict], max_words: int = 4) -> list[dict]:
