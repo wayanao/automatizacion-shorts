@@ -13,3 +13,5 @@ output/
 # conservar la musica de fondo (assets/music) y el historial de temas usados
 !assets/music/*.mp3
 !used_topics.json
+assets/font.ttf
+

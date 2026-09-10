@@ -31,4 +31,25 @@ WHISPER_MODEL = "whisper-1"
 VIDEO_WIDTH = 1080
 VIDEO_HEIGHT = 1920
 MAX_DURATION_SECONDS = 55
-FONT_PATH = str(ASSETS_DIR / "font.ttf")
+
+
+def _get_font_path() -> str:
+    target = ASSETS_DIR / "font.ttf"
+    if target.exists():
+        return str(target)
+    # Fallback si no está en assets
+    candidates = [
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+        "C:/Windows/Fonts/impact.ttf",
+        "C:/Windows/Fonts/arialbd.ttf",
+        "C:/Windows/Fonts/arial.ttf",
+    ]
+    for c in candidates:
+        if os.path.exists(c):
+            return c
+    return str(target)
+
+
+FONT_PATH = _get_font_path()
+

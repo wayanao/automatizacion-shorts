@@ -7,7 +7,7 @@ from pathlib import Path
 from src import config
 from src.script_generator import generate_script, save_used_topic
 from src.tts import text_to_speech, transcribe_with_word_timestamps
-from src.visuals import download_background_video
+from src.visuals import download_background_videos
 from src.video_builder import build_video
 from src.youtube_uploader import upload_short
 
@@ -29,11 +29,11 @@ def run() -> None:
     if not words:
         raise RuntimeError("No se obtuvieron timestamps de palabras para los subtitulos")
 
-    print("[4/6] Descargando video de fondo...")
-    background_path = download_background_video(data["keywords"], work_dir / "fondo.mp4")
+    print("[4/6] Descargando videos de fondo dinámicos...")
+    background_paths = download_background_videos(data["keywords"], work_dir / "clips", min_clips=5)
 
-    print("[5/6] Ensamblando video final...")
-    final_video_path, music_attribution = build_video(background_path, audio_path, words, work_dir / "short_final.mp4")
+    print("[5/6] Ensamblando video final (tomas múltiples, zoom y subtítulos de alto impacto)...")
+    final_video_path, music_attribution = build_video(background_paths, audio_path, words, work_dir / "short_final.mp4")
 
     description = data["description"]
     if music_attribution:
