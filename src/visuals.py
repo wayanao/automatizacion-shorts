@@ -48,9 +48,9 @@ def download_background_videos(keywords: list[str], output_dir: Path, min_clips:
     seen_ids = set()
 
     # Buscar clips con cada keyword individual para máxima variedad visual
-    search_queries = list(keywords) if keywords else ["cinematic nature", "galaxy space", "aerial view"]
+    search_queries = list(keywords) if keywords else ["colombia flag", "courthouse justice", "bogota city"]
     if len(search_queries) < 3:
-        search_queries.extend(["cinematic 4k", "timelapse", "aerial drone"])
+        search_queries.extend(["government building", "gavel court", "colombia congress"])
 
     for query in search_queries:
         videos = _search_videos_for_query(query, per_page=8)
@@ -62,7 +62,7 @@ def download_background_videos(keywords: list[str], output_dir: Path, min_clips:
             break
 
     if not all_videos:
-        all_videos = _search_videos_for_query("cinematic background", per_page=10)
+        all_videos = _search_videos_for_query("colombia politics", per_page=10)
 
     if not all_videos:
         raise RuntimeError("No se encontraron videos de fondo en Pexels")
