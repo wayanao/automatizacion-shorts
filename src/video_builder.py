@@ -5,6 +5,7 @@ import numpy as np
 from PIL import Image
 from moviepy import (
     VideoFileClip,
+    ImageClip,
     AudioFileClip,
     CompositeVideoClip,
     CompositeAudioClip,
@@ -68,7 +69,8 @@ def _build_background_sequence(background_inputs: list[Path] | Path, total_durat
     try:
         for i in range(num_shots_needed):
             path = paths[i % len(paths)]
-            clip = VideoFileClip(str(path))
+            is_image = path.suffix.lower() in {".jpg", ".jpeg", ".png"}
+            clip = ImageClip(str(path)).with_duration(shot_duration) if is_image else VideoFileClip(str(path))
             raw_clips.append(clip)
 
             clip = _crop_to_vertical(clip)
@@ -163,7 +165,7 @@ def build_video(
     voice_clip = audio_clip.subclipped(0, duration)
 
     music_clip = None
-    music_path, music_attribution = pick_background_music()
+    music_path, music_attribution = pick_background_music(category="news")
     if music_path:
         music_clip = AudioFileClip(music_path)
         music_clip = _loop_audio_to_duration(music_clip, duration)

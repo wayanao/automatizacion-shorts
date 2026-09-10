@@ -7,7 +7,7 @@ from pathlib import Path
 from src import config
 from src.script_generator import generate_script, save_used_topic
 from src.tts import text_to_speech, transcribe_with_word_timestamps
-from src.visuals import download_background_videos, download_person_photo
+from src.visuals import download_background_videos, download_person_images
 from src.thumbnail import build_thumbnail
 from src.video_builder import build_video
 from src.youtube_uploader import upload_short
@@ -30,17 +30,22 @@ def run() -> None:
     if not words:
         raise RuntimeError("No se obtuvieron timestamps de palabras para los subtitulos")
 
-    print("[4/7] Descargando videos de fondo dinámicos...")
+    print("[4/7] Descargando videos de fondo y fotos reales del personaje...")
     background_paths = download_background_videos(data["keywords"], work_dir / "clips", min_clips=5)
+    person_photos = download_person_images("Abelardo de la Espriella", work_dir / "persona", max_images=3)
+    if person_photos:
+        # Intercalar las fotos reales al inicio para captar la atencion desde el primer corte
+        background_paths = person_photos + background_paths
+    else:
+        print("  [Aviso] No se encontraron fotos del personaje, se usará solo video de stock genérico.")
 
     print("[5/7] Ensamblando video final (tomas múltiples, zoom y subtítulos de alto impacto)...")
     final_video_path, music_attribution = build_video(background_paths, audio_path, words, work_dir / "short_final.mp4")
 
     print("[6/7] Generando miniatura con foto del personaje...")
     thumbnail_path = None
-    photo_path = download_person_photo("Abelardo de la Espriella", work_dir / "foto.jpg")
-    if photo_path:
-        thumbnail_path = build_thumbnail(photo_path, data["title"], work_dir / "thumbnail.jpg")
+    if person_photos:
+        thumbnail_path = build_thumbnail(person_photos[0], data["title"], work_dir / "thumbnail.jpg")
     else:
         print("  [Aviso] No se encontró foto disponible, se usará la miniatura automática de YouTube.")
 

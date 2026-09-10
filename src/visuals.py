@@ -7,37 +7,79 @@ from src import config
 
 PEXELS_SEARCH_URL = "https://api.pexels.com/videos/search"
 WIKIPEDIA_API_URL = "https://es.wikipedia.org/w/api.php"
+_IGNORED_IMAGE_PATTERNS = ("commons-logo", "wiki", "icon", "edit-", "flag_of", "symbol", "padlock")
 
 
-def download_person_photo(name: str, dest_path: Path) -> Path | None:
-    """Descarga una foto de licencia libre desde Wikipedia (Wikimedia) para un personaje público."""
+def download_person_images(name: str, output_dir: Path, max_images: int = 3) -> list[Path]:
+    """Descarga varias fotos de licencia libre del personaje desde Wikipedia/Wikimedia para usarlas
+    como tomas reales dentro del video (ademas de la miniatura)."""
+    output_dir.mkdir(parents=True, exist_ok=True)
     try:
-        response = requests.get(
+        page_response = requests.get(
             WIKIPEDIA_API_URL,
             params={
                 "action": "query",
                 "generator": "search",
                 "gsrsearch": name,
                 "gsrlimit": 1,
-                "prop": "pageimages",
-                "piprop": "original",
+                "prop": "images",
+                "imlimit": 30,
                 "format": "json",
             },
             timeout=20,
         )
-        response.raise_for_status()
-        pages = response.json().get("query", {}).get("pages", {})
+        page_response.raise_for_status()
+        pages = page_response.json().get("query", {}).get("pages", {})
+        file_titles = []
         for page in pages.values():
-            image_url = page.get("original", {}).get("source")
-            if not image_url:
-                continue
-            img_response = requests.get(image_url, timeout=30)
-            img_response.raise_for_status()
-            dest_path.write_bytes(img_response.content)
-            return dest_path
+            for img in page.get("images", []):
+                title = img.get("title", "")
+                lower = title.lower()
+                if not lower.endswith((".jpg", ".jpeg", ".png")):
+                    continue
+                if any(pattern in lower for pattern in _IGNORED_IMAGE_PATTERNS):
+                    continue
+                file_titles.append(title)
+        if not file_titles:
+            return []
+
+        info_response = requests.get(
+            WIKIPEDIA_API_URL,
+            params={
+                "action": "query",
+                "titles": "|".join(file_titles[:20]),
+                "prop": "imageinfo",
+                "iiprop": "url|size",
+                "format": "json",
+            },
+            timeout=20,
+        )
+        info_response.raise_for_status()
+        info_pages = info_response.json().get("query", {}).get("pages", {})
+
+        candidates = []
+        for page in info_pages.values():
+            for info in page.get("imageinfo", []):
+                url = info.get("url")
+                width = info.get("width", 0)
+                if url and width >= 400:
+                    candidates.append((width, url))
+        candidates.sort(key=lambda c: c[0], reverse=True)
+
+        downloaded = []
+        for idx, (_, url) in enumerate(candidates[:max_images]):
+            dest_path = output_dir / f"persona_{idx+1}.jpg"
+            try:
+                img_response = requests.get(url, timeout=30)
+                img_response.raise_for_status()
+                dest_path.write_bytes(img_response.content)
+                downloaded.append(dest_path)
+            except Exception as e:
+                print(f"  [Aviso] Error descargando imagen {idx+1} del personaje: {e}")
+        return downloaded
     except Exception as e:
-        print(f"  [Aviso] No se pudo obtener foto de Wikipedia: {e}")
-    return None
+        print(f"  [Aviso] No se pudieron obtener imagenes de Wikipedia: {e}")
+        return []
 
 
 def _search_videos_for_query(query: str, per_page: int = 10) -> list[dict]:
