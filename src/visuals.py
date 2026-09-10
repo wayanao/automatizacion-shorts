@@ -6,6 +6,38 @@ import requests
 from src import config
 
 PEXELS_SEARCH_URL = "https://api.pexels.com/videos/search"
+WIKIPEDIA_API_URL = "https://es.wikipedia.org/w/api.php"
+
+
+def download_person_photo(name: str, dest_path: Path) -> Path | None:
+    """Descarga una foto de licencia libre desde Wikipedia (Wikimedia) para un personaje público."""
+    try:
+        response = requests.get(
+            WIKIPEDIA_API_URL,
+            params={
+                "action": "query",
+                "generator": "search",
+                "gsrsearch": name,
+                "gsrlimit": 1,
+                "prop": "pageimages",
+                "piprop": "original",
+                "format": "json",
+            },
+            timeout=20,
+        )
+        response.raise_for_status()
+        pages = response.json().get("query", {}).get("pages", {})
+        for page in pages.values():
+            image_url = page.get("original", {}).get("source")
+            if not image_url:
+                continue
+            img_response = requests.get(image_url, timeout=30)
+            img_response.raise_for_status()
+            dest_path.write_bytes(img_response.content)
+            return dest_path
+    except Exception as e:
+        print(f"  [Aviso] No se pudo obtener foto de Wikipedia: {e}")
+    return None
 
 
 def _search_videos_for_query(query: str, per_page: int = 10) -> list[dict]:

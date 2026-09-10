@@ -24,7 +24,13 @@ def _get_credentials() -> Credentials:
     )
 
 
-def upload_short(video_path: Path, title: str, description: str, tags: list[str]) -> str:
+def upload_short(
+    video_path: Path,
+    title: str,
+    description: str,
+    tags: list[str],
+    thumbnail_path: Path | None = None,
+) -> str:
     credentials = _get_credentials()
     youtube = build("youtube", "v3", credentials=credentials)
 
@@ -49,4 +55,15 @@ def upload_short(video_path: Path, title: str, description: str, tags: list[str]
         status, response = request.next_chunk()
 
     video_id = response["id"]
+
+    if thumbnail_path:
+        try:
+            youtube.thumbnails().set(
+                videoId=video_id,
+                media_body=MediaFileUpload(str(thumbnail_path)),
+            ).execute()
+        except Exception as e:
+            # La cuenta puede requerir verificación telefónica para miniaturas personalizadas
+            print(f"  [Aviso] No se pudo asignar la miniatura personalizada: {e}")
+
     return f"https://youtube.com/shorts/{video_id}"
