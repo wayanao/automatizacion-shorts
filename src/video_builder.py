@@ -159,17 +159,18 @@ def build_video(
     audio_path: Path,
     words: list[dict],
     out_path: Path,
+    music_mood: str = "peaceful",
 ) -> tuple[Path, str | None]:
     audio_clip = AudioFileClip(str(audio_path))
     duration = min(audio_clip.duration, config.MAX_DURATION_SECONDS)
     voice_clip = audio_clip.subclipped(0, duration)
 
     music_clip = None
-    music_path, music_attribution = pick_background_music(category="news")
+    music_path, music_attribution = pick_background_music(category=music_mood)
     if music_path:
         music_clip = AudioFileClip(music_path)
         music_clip = _loop_audio_to_duration(music_clip, duration)
-        music_clip = music_clip.with_effects([MultiplyVolume(0.12)])  # De fondo, volumen sutil
+        music_clip = music_clip.with_effects([MultiplyVolume(0.09)])  # De fondo, volumen muy sutil
         final_audio = CompositeAudioClip([music_clip, voice_clip])
     else:
         final_audio = voice_clip

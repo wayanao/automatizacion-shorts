@@ -24,7 +24,11 @@ YT_PRIVACY_STATUS = os.getenv("YT_PRIVACY_STATUS", "public")
 # Modelos OpenAI usados en el pipeline
 CHAT_MODEL = "gpt-4o-mini"
 TTS_MODEL = "gpt-4o-mini-tts"
-TTS_VOICE = "onyx"
+TTS_VOICE = "sage"
+TTS_INSTRUCTIONS = (
+    "Lee en español con una voz cálida, muy relajante y cercana. Mantén un ritmo lento, "
+    "pausas suaves entre ideas y un tono de consuelo, sin sonar dramático ni como un anuncio."
+)
 WHISPER_MODEL = "whisper-1"
 
 # Formato de short vertical

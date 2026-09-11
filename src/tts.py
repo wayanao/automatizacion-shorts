@@ -10,6 +10,7 @@ def text_to_speech(text: str, out_path: Path) -> Path:
         model=config.TTS_MODEL,
         voice=config.TTS_VOICE,
         input=text,
+        instructions=config.TTS_INSTRUCTIONS,
     ) as response:
         response.stream_to_file(out_path)
     return out_path

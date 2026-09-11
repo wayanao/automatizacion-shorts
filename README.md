@@ -1,11 +1,11 @@
-# Automatización de Shorts de YouTube (datos curiosos)
+# Automatización de Shorts de YouTube (salmos y versículos)
 
 Pipeline que cada 6 horas, de forma automática en la nube (GitHub Actions):
 
-1. Genera un tema y guion de "dato curioso" con OpenAI (evitando repetir temas ya usados).
-2. Convierte el guion a voz narrada con el TTS de OpenAI.
+1. Genera una reflexión bíblica con gancho emocional, versículo y cierre de esperanza usando OpenAI.
+2. Convierte el guion a una voz cálida y relajante con el TTS de OpenAI.
 3. Transcribe el audio con Whisper (OpenAI) para obtener el tiempo exacto de cada palabra.
-4. Descarga un video de fondo vertical relacionado desde Pexels (gratis).
+4. Descarga varios videos de fondo verticales desde Pexels, acordes con el estado de ánimo del versículo.
 5. Ensambla el short final (1080x1920, <60s) con subtítulos animados quemados en el video.
 6. Sube el video a tu canal de YouTube como Short, con título, descripción y tags.
 
@@ -113,7 +113,7 @@ Short cada 6 horas" > "Run workflow".
 
 - **Frecuencia**: cambia el `cron` en `.github/workflows/shorts.yml` si quieres
   otra frecuencia (ej. `0 */4 * * *` para cada 4 horas).
-- **Voz**: cambia `TTS_VOICE` en `src/config.py` (voces disponibles de OpenAI TTS:
+- **Voz**: cambia `TTS_VOICE` en `src/config.py` (el valor actual es `sage`, elegido para un tono sereno; voces disponibles de OpenAI TTS:
   alloy, echo, fable, onyx, nova, shimmer, coral, verse, ballad, ash, sage).
 - **Privacidad**: `YT_PRIVACY_STATUS` puede ser `public`, `unlisted` o `private`
   (útil para revisar los primeros videos antes de hacerlos públicos).
