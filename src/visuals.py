@@ -1,4 +1,5 @@
 """Busca y descarga múltiples videos verticales de stock desde Pexels según palabras clave."""
+import json
 import random
 import shutil
 from pathlib import Path
@@ -8,6 +9,24 @@ from src import config
 PEXELS_SEARCH_URL = "https://api.pexels.com/videos/search"
 WIKIPEDIA_API_URL = "https://es.wikipedia.org/w/api.php"
 _IGNORED_IMAGE_PATTERNS = ("commons-logo", "wiki", "icon", "edit-", "flag_of", "symbol", "padlock")
+
+
+def _load_used_video_ids() -> set[str]:
+    if not config.USED_VIDEO_IDS_FILE.exists():
+        return set()
+    try:
+        data = json.loads(config.USED_VIDEO_IDS_FILE.read_text(encoding="utf-8"))
+        return set(data.get("video_ids", []))
+    except (json.JSONDecodeError, OSError):
+        return set()
+
+
+def _save_used_video_ids(video_ids: set[str]) -> None:
+    recent_ids = list(video_ids)[-1000:]
+    config.USED_VIDEO_IDS_FILE.write_text(
+        json.dumps({"video_ids": recent_ids}, indent=2),
+        encoding="utf-8",
+    )
 
 
 def download_person_images(name: str, output_dir: Path, max_images: int = 3) -> list[Path]:
@@ -120,6 +139,7 @@ def download_background_videos(keywords: list[str], output_dir: Path, min_clips:
     output_dir.mkdir(parents=True, exist_ok=True)
     all_videos = []
     seen_ids = set()
+    used_video_ids = _load_used_video_ids()
 
     # Buscar clips con cada keyword individual para máxima variedad visual
     search_queries = list(keywords) if keywords else [
@@ -145,11 +165,18 @@ def download_background_videos(keywords: list[str], output_dir: Path, min_clips:
     if not all_videos:
         raise RuntimeError("No se encontraron videos de fondo en Pexels")
 
-    # Barajar para dinamismo y seleccionar hasta min_clips
+    # Preferir material que nunca se haya usado en ejecuciones anteriores.
+    fresh_videos = [video for video in all_videos if str(video["id"]) not in used_video_ids]
+    all_videos = fresh_videos
+    if not all_videos:
+        raise RuntimeError("Pexels no devolvió videos nuevos; se evita reutilizar material anterior")
+
+    # Barajar para dinamismo y seleccionar hasta min_clips.
     random.shuffle(all_videos)
     selected_videos = all_videos[: max(min_clips, 4)]
 
     downloaded_paths = []
+    downloaded_video_ids = set()
     for idx, vid in enumerate(selected_videos):
         url = _pick_best_video_url(vid)
         if not url:
@@ -162,11 +189,14 @@ def download_background_videos(keywords: list[str], output_dir: Path, min_clips:
                     for chunk in r.iter_content(chunk_size=16384):
                         f.write(chunk)
             downloaded_paths.append(dest_path)
+            downloaded_video_ids.add(str(vid["id"]))
         except Exception as e:
             print(f"  [Aviso] Error descargando clip {idx+1}: {e}")
 
     if not downloaded_paths:
         raise RuntimeError("No se pudo descargar ningún video de fondo")
+
+    _save_used_video_ids(used_video_ids | downloaded_video_ids)
 
     return downloaded_paths
 

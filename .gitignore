@@ -10,8 +10,9 @@ output/
 *.mp3
 *.wav
 
-# conservar la musica de fondo (assets/music) y el historial de temas usados
+# conservar la musica de fondo y los historiales usados
 !assets/music/*.mp3
 !used_topics.json
+!used_video_ids.json
 assets/font.ttf
 

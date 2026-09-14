@@ -9,6 +9,7 @@ load_dotenv(ROOT_DIR / ".env")
 OUTPUT_DIR = ROOT_DIR / "output"
 ASSETS_DIR = ROOT_DIR / "assets"
 USED_TOPICS_FILE = ROOT_DIR / "used_topics.json"
+USED_VIDEO_IDS_FILE = ROOT_DIR / "used_video_ids.json"
 
 OUTPUT_DIR.mkdir(exist_ok=True)
 ASSETS_DIR.mkdir(exist_ok=True)
